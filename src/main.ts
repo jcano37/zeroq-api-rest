@@ -5,7 +5,9 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-
+/**
+ * Función principal que inicia la aplicación.
+ */
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
     app.useGlobalPipes(new ValidationPipe());

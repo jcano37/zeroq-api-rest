@@ -1,8 +1,15 @@
 import {Injectable} from '@nestjs/common';
 import ProcessEnv = NodeJS.ProcessEnv;
 
+/**
+ * Datos de configuración para la conexión a la base de datos.
+ */
 @Injectable()
 export class DatabaseConfig {
+    /**
+     * Obtiene los datos de configuración de la base de datos a partir de un .env
+     * @returns {object} Datos de configuración de la base de datos.
+     */
     public get databaseOptions(): any {
         const {
             DB_HOST,

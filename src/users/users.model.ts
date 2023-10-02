@@ -1,6 +1,9 @@
 import {IsString, MinLength} from 'class-validator';
 import {JSONSchema} from 'class-validator-jsonschema';
 
+/**
+ * Clase usuario, define las reglas de validación para los campos.
+ */
 @JSONSchema({
     title: 'User',
     description: 'Validating User Object',
