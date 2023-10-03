@@ -1,13 +1,14 @@
-import {Controller, Post, Body} from '@nestjs/common';
+import {Controller, Post, Body, ConflictException} from '@nestjs/common';
 import {Users} from './users.model';
 import {UsersService} from './users.service';
+import {LoggerService} from "../logs/logs.service";
 
 /**
  * Controlador para la gestión de usuarios.
  */
-@Controller('users')
+@Controller('user')
 export class UsersController {
-    constructor(private readonly usersService: UsersService) {
+    constructor(private readonly usersService: UsersService, private readonly loggerService: LoggerService) {
     }
 
     /**
@@ -16,8 +17,17 @@ export class UsersController {
      * @param {Users} user - Los datos del usuario a crear.
      * @returns {Promise<any>} Una promesa que resuelve cuando se ha creado el usuario.
      */
-    @Post()
+    @Post('register')
     async createUser(@Body() user: Users): Promise<any> {
-        return this.usersService.createUser(user);
+        const insertedUser = await this.usersService.createUser(user)
+        const DEBUG = process.env.DEBUG === 'true'
+
+        if (!insertedUser) {
+            throw new ConflictException('User already exists');
+        }
+        if (DEBUG) {
+            this.loggerService.logDebug(JSON.stringify(insertedUser));
+        }
+        return insertedUser;
     }
 }

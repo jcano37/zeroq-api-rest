@@ -4,7 +4,7 @@ import {DatabaseConfig} from 'src/database/database.config';
 import {Users} from "./users.model";
 import {validate} from "class-validator";
 import {LoggerService} from '../logs/logs.service';
-import {CryptoService} from "../crypto/crypto.service";
+import * as bcrypt from 'bcrypt';
 
 /**
  * Servicio para la gestión de usuarios
@@ -17,9 +17,8 @@ export class UsersService {
      * Constructor del servicio.
      * @param {LoggerService} loggerService - Servicio de registro de eventos.
      * @param {DatabaseConfig} databaseConfig - Configuración de la base de datos.
-     * @param {CryptoService} cryptoService - Servicio de cifrado y descifrado.
      */
-    constructor(private readonly loggerService: LoggerService, databaseConfig: DatabaseConfig, private readonly cryptoService: CryptoService) {
+    constructor(private readonly loggerService: LoggerService, databaseConfig: DatabaseConfig) {
         this.pool = new Pool(databaseConfig.databaseOptions);
     }
 
@@ -32,7 +31,6 @@ export class UsersService {
      */
     async createUser(userData: Users): Promise<any> {
         const validationErrors = await validate(userData);
-        const DEBUG = process.env.DEBUG === 'true'
 
         if (validationErrors.length > 0) {
             throw new BadRequestException(validationErrors);
@@ -41,17 +39,39 @@ export class UsersService {
         const client = await this.pool.connect();
 
         try {
+            const hashedPassword = await bcrypt.hash(userData.password, 10);
             const query = 'SELECT * FROM insert_user($1, $2)';
-            const values = [userData.username, this.cryptoService.encrypt(userData.password)];
+            const values = [userData.username, hashedPassword];
             const result = await client.query(query, values);
 
-            if (DEBUG)
-                this.loggerService.logDebug(JSON.stringify(result.rows[0]));
+            return result.rows[0]['insert_user'];
 
-            return result.rows[0];
         } catch (error) {
             this.loggerService.logError(error);
-            throw new Error(error);
+            return error
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Comprueba si un usuario ya existe en la base de datos.
+     *
+     * @param {string} username - El nombre de usuario que se va a verificar.
+     * @returns {Promise<object|null>} Una promesa que resuelve a un objeto JSON si el usuario existe,
+     * o `null` si no existe o si hay un error.
+     */
+    async userExists(username: string): Promise<any> {
+        const client = await this.pool.connect();
+
+        try {
+            const query = 'SELECT user_exists($1) AS user_exists';
+            const result = await client.query(query, [username]);
+
+            return result.rows[0]['user_exists'];
+        } catch (error) {
+            this.loggerService.logError(error);
+            return error
         } finally {
             client.release();
         }
