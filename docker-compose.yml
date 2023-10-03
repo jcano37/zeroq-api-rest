@@ -9,6 +9,8 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5432:5432"
+    volumes:
+      - ./init-script.sql:/docker-entrypoint-initdb.d/init-script.sql
 
   nestjs-app:
     build:
@@ -17,8 +19,6 @@ services:
     container_name: zeroq-container
     ports:
       - "3000:3000"
-    volumes:
-      - ./init-script.sql:/docker-entrypoint-initdb.d/init-script.sql
     env_file:
       - .env
     depends_on:
