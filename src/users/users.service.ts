@@ -1,6 +1,6 @@
 import {BadRequestException, Injectable} from '@nestjs/common';
 import {Pool} from 'pg';
-import {DatabaseConfig} from 'src/database/database.config';
+import {DatabaseConfig} from '../database/database.config';
 import {Users} from "./users.model";
 import {validate} from "class-validator";
 import {LoggerService} from '../logs/logs.service';
